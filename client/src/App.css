@@ -162,7 +162,7 @@ img {
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-gap: 2rem;
+  grid-gap: 6rem;
 }
 
 .grid-3 {
