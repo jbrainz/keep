@@ -1,5 +1,5 @@
 import React, { useReducer } from 'react';
-import { v4 } from 'uuid';
+import axios from 'axios';
 import ContactContext from './contactContext';
 import ContactReducer from './contactReducer';
 import {
@@ -10,47 +10,75 @@ import {
   CLEAR_CURRENT,
   FILLTER_CONTACTS,
   CLEAR_FILTER,
+  CONTACT_ERROR,
+  GET_CONTACT,
+  CLEAR_CONTACT,
 } from '../types';
 
 const ContactState = (props) => {
   const initialState = {
-    contacts: [
-      {
-        id: 1,
-        name: 'Jill Johnson',
-        email: 'jill@mail.com',
-        phone: '222-111-222',
-        type: 'personal',
-      },
-      {
-        id: 2,
-        name: 'Sara williams',
-        email: 'sara@mail.com',
-        phone: '888-444-222',
-        type: 'professional',
-      },
-      {
-        id: 3,
-        name: 'John Doe',
-        email: 'doe@mail.com',
-        phone: '222-090-221',
-        type: 'personal',
-      },
-    ],
+    contacts: null,
     current: null,
-    filtered: null
+    filtered: null,
+    error: null,
   };
   const [state, dispatch] = useReducer(ContactReducer, initialState);
+  //Get contact.
+  const getContact = async () => {
+    try {
+      const res = await axios.get('/api/contacts');
+      dispatch({ type: GET_CONTACT, payload: res.data });
+    } catch (error) {
+      dispatch({ type: CONTACT_ERROR, payload: error.response.msg });
+    }
+  };
 
   //Add contact
-  const addContact = (contact) => {
-    contact.id = v4();
-    dispatch({ type: ADD_CONTACT, payload: contact });
+  const addContact = async (contact) => {
+    const config = {
+      headers: { 'Content-Type': 'application/json' },
+    };
+    try {
+      const res = await axios.post('/api/contacts', contact, config);
+      dispatch({ type: ADD_CONTACT, payload: res.data });
+    } catch (error) {
+      dispatch({ type: CONTACT_ERROR, payload: error.response.msg });
+    }
   };
   //Delete Contact
-  const deleteContact = (id) => {
-    dispatch({ type: DELETE_CONTACT, payload: id });
+  const deleteContact = async (id) => {
+    try {
+      await axios.delete(`/api/contacts/${id}`);
+      dispatch({ 
+        type: DELETE_CONTACT, 
+        payload: id 
+      });
+    } catch (error) {
+      dispatch({
+        type: CONTACT_ERROR,
+        payload: error.response.msg,
+      });
+    }
   };
+
+  //Update Contacts
+  const updateContact = async contact =>{
+    const config = {
+      headers: { 'Content-Type': 'application/json' },
+    };
+    try {
+      const res =  await axios.put(`/api/contacts/${contact._id}`, contact, config);
+      dispatch({ 
+        type: UPDATE_CONTACT, 
+        payload: res.data
+      });
+    } catch (error) {
+      dispatch({
+        type: CONTACT_ERROR,
+        payload: error.response.msg,
+      });
+    }
+    dispatch({ type: UPDATE_CONTACT, payload: contact });}
   //Set current contact
   const setCurrent = (current) => {
     dispatch({ type: SET_CURRENT, payload: current });
@@ -59,16 +87,17 @@ const ContactState = (props) => {
   const clearCurrent = () => {
     dispatch({ type: CLEAR_CURRENT });
   };
-  //Update Contacts
-  const updateContact = (contact) =>
-    dispatch({ type: UPDATE_CONTACT, payload: contact });
+  //Clear Contacts.
+  const clearContacts = () => {
+    dispatch({ type: CLEAR_CONTACT });
+  };
+  
   //Filter Contacts
-  const filterContacts = text =>
+  const filterContacts = (text) =>
     dispatch({ type: FILLTER_CONTACTS, payload: text });
 
   //Clear Contacts
-  const clearFilter = () =>
-  dispatch({ type: CLEAR_FILTER });
+  const clearFilter = () => dispatch({ type: CLEAR_FILTER });
 
   return (
     <ContactContext.Provider
@@ -76,13 +105,16 @@ const ContactState = (props) => {
         contacts: state.contacts,
         current: state.current,
         filtered: state.filtered,
+        error: state.error,
         addContact,
         deleteContact,
         setCurrent,
         clearCurrent,
         updateContact,
         filterContacts,
-        clearFilter
+        clearFilter,
+        getContact,
+        clearContacts,
       }}
     >
       {props.children}

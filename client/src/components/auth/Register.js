@@ -7,6 +7,7 @@ const Register = props => {
   const alertContext = useContext(AlertContext);
   const authContext = useContext(AuthContext);
   
+  const { setAlert } = alertContext;
   const {register, error, clearErrors, isAuthenticated} = authContext;
 
   useEffect(()=>{
@@ -17,10 +18,10 @@ const Register = props => {
       setAlert(error, 'danger')
       clearErrors();
     }
-    //eslint-disble-next-line
+    //eslint-disable-next-line
   }, [error, isAuthenticated, props.history])
 
-  const { setAlert } = alertContext;
+ 
   const [user, setUser] = useState({
     name: '',
     email: '',

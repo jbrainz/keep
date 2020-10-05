@@ -4,7 +4,7 @@ import AuthReducer from './authReducer';
 import axios from 'axios';
 import setAuthToken from '../../util/setAuthToken';
 import {
-  REGISTER_SUCCES,
+  REGISTER_SUCCESS,
   REGISTER_FAIL,
   LOGIN_FAIL,
   LOGIN_SUCCESS,
@@ -25,6 +25,19 @@ const AuthState = (props) => {
 
   const [state, dispatch] = useReducer(AuthReducer, initialState);
 
+  //Load user.
+  const loadUser = async () => {
+    if (localStorage.token) {
+      setAuthToken(localStorage.token);
+    }
+    try {
+      const res = await axios.get('/api/auth');
+      dispatch({ type: USER_LOADED, payload: res.data });
+    } catch (err) {
+      dispatch({ type: AUTH_ERROR });
+    }
+  };
+  
   //Register User.
   const register = async (formData) => {
     const config = {
@@ -36,7 +49,7 @@ const AuthState = (props) => {
       const res = await axios.post('/api/users', formData, config);
 
       dispatch({
-        type: REGISTER_SUCCES,
+        type: REGISTER_SUCCESS,
         payload: res.data,
       });
       loadUser();
@@ -48,19 +61,7 @@ const AuthState = (props) => {
     }
   };
 
-  //Load user.
-  const loadUser = async () => {
-    if (localStorage.token) {
-      setAuthToken(localStorage.token);
-    }
-    try {
-      const res = await axios.get('/api/auth');
-
-      dispatch({ type: USER_LOADED, payload: res.data });
-    } catch (err) {
-      dispatch({ type: AUTH_ERROR });
-    }
-  };
+  
 
   //Login User.
   const login = async (formData) => {
@@ -75,6 +76,7 @@ const AuthState = (props) => {
         type: LOGIN_SUCCESS,
         payload: res.data,
       });
+      loadUser();
     } catch (err) {
       dispatch({
         type: LOGIN_FAIL,
@@ -84,7 +86,7 @@ const AuthState = (props) => {
   };
 
   //Logout User.
-
+  const logout = () => dispatch({type: LOGOUT});
   //Clear Errors.
   const clearErrors = () => dispatch({ type: CLEAR_ERRORS });
 
@@ -100,6 +102,7 @@ const AuthState = (props) => {
         loadUser,
         clearErrors,
         login,
+        logout
       }}
     >
       {props.children}
